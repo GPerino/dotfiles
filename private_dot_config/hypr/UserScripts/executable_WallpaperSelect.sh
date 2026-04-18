@@ -12,10 +12,10 @@ wallpaper_current="$HOME/.config/hypr/wallpaper_effects/.wallpaper_current"
 iDIR="$HOME/.config/swaync/images"
 iDIRi="$HOME/.config/swaync/icons"
 
-# swww transition config
-FPS=30
+# awww transition config
+FPS=60
 TYPE="any"
-DURATION=1
+DURATION=2
 BEZIER=".43,1.19,1,.4"
 SWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration $DURATION --transition-bezier $BEZIER"
 
@@ -45,7 +45,7 @@ rofi_override="element-icon{size:${adjusted_icon_size}%;}"
 
 # Kill existing wallpaper daemons for video
 kill_wallpaper_for_video() {
-  swww kill 2>/dev/null
+  awww kill 2>/dev/null
   pkill mpvpaper 2>/dev/null
   pkill swaybg 2>/dev/null
   pkill hyprpaper 2>/dev/null
@@ -98,19 +98,19 @@ menu() {
   done
 }
 
-# Offer SDDM Sequioa Wallpaper Option (only for non-video wallpapers)
+# Offer SDDM Simple Wallpaper Option (only for non-video wallpapers)
 set_sddm_wallpaper() {
   sleep 1
-  sddm_sequoia="/usr/share/sddm/themes/sequoia_2"
+  sddm_simple="/usr/share/sddm/themes/simple_sddm_2"
 
-  if [ -d "$sddm_sequoia" ]; then
+  if [ -d "$sddm_simple" ]; then
 
     # Check if yad is running to avoid multiple notifications
     if pidof yad >/dev/null; then
       killall yad
     fi
 
-    if yad --info --text="Set current wallpaper as SDDM background?\n\nNOTE: This only applies to SEQUOIA SDDM Theme" \
+    if yad --info --text="Set current wallpaper as SDDM background?\n\nNOTE: This only applies to SIMPLE SDDM v2 Theme" \
       --text-align=left \
       --title="SDDM Background" \
       --timeout=5 \
@@ -123,11 +123,9 @@ set_sddm_wallpaper() {
         notify-send -i "$iDIR/error.png" "Missing $terminal" "Install $terminal to enable setting of wallpaper background"
         exit 1
       fi
-
-      # Open terminal to enter password
-      $terminal -e bash -c "echo 'Enter your password to set wallpaper as SDDM Background'; \
-            sudo cp -r $wallpaper_current '$sddm_sequoia/backgrounds/default' && \
-            notify-send -i '$iDIR/ja.png' 'SDDM' 'Background SET'"
+	  
+	  exec $SCRIPTSDIR/sddm_wallpaper.sh --normal
+    
     fi
   fi
 }
@@ -139,7 +137,7 @@ modify_startup_config() {
   # Check if it's a live wallpaper (video)
   if [[ "$selected_file" =~ \.(mp4|mkv|mov|webm)$ ]]; then
     # For video wallpapers:
-    sed -i '/^\s*exec-once\s*=\s*swww-daemon\s*--format\s*xrgb\s*$/s/^/\#/' "$startup_config"
+    sed -i '/^\s*exec-once\s*=\s*awww-daemon\s*--format\s*xrgb\s*$/s/^/\#/' "$startup_config"
     sed -i '/^\s*#\s*exec-once\s*=\s*mpvpaper\s*.*$/s/^#\s*//;' "$startup_config"
 
     # Update the livewallpaper variable with the selected video path (using $HOME)
@@ -149,7 +147,7 @@ modify_startup_config() {
     echo "Configured for live wallpaper (video)."
   else
     # For image wallpapers:
-    sed -i '/^\s*#\s*exec-once\s*=\s*swww-daemon\s*--format\s*xrgb\s*$/s/^\s*#\s*//;' "$startup_config"
+    sed -i '/^\s*#\s*exec-once\s*=\s*awww-daemon\s*--format\s*xrgb\s*$/s/^\s*#\s*//;' "$startup_config"
 
     sed -i '/^\s*exec-once\s*=\s*mpvpaper\s*.*$/s/^/\#/' "$startup_config"
 
@@ -163,15 +161,15 @@ apply_image_wallpaper() {
 
   kill_wallpaper_for_image
 
-  if ! pgrep -x "swww-daemon" >/dev/null; then
-    echo "Starting swww-daemon..."
-    swww-daemon --format xrgb &
+  if ! pgrep -x "awww-daemon" >/dev/null; then
+    echo "Starting awww-daemon..."
+    awww-daemon --format xrgb &
   fi
 
-  swww img -o "$focused_monitor" "$image_path" $SWWW_PARAMS
+  awww img -o "$focused_monitor" "$image_path" $SWWW_PARAMS
 
-  # Run additional scripts
-  "$SCRIPTSDIR/WallustSwww.sh"
+  # Run additional scripts (pass the image path to avoid cache race conditions)
+  "$SCRIPTSDIR/WallustSwww.sh" "$image_path"
   sleep 2
   "$SCRIPTSDIR/Refresh.sh"
   sleep 1
@@ -236,4 +234,3 @@ if pidof rofi >/dev/null; then
 fi
 
 main
-

@@ -15,7 +15,7 @@ if [ -z "$local_version" ]; then
 fi
 
 # GitHub URL - KooL's dots
-branch="Ubuntu-24.04-Dots"
+branch="main"
 github_url="https://github.com/JaKooLit/Hyprland-Dots/tree/$branch/config/hypr/"
 
 # Fetch the version from GitHub URL - KooL's dots
